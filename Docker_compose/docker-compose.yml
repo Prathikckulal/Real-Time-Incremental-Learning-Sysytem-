@@ -1,0 +1,99 @@
+services:
+
+  zookeeper:
+
+    image: confluentinc/cp-zookeeper:7.5.0
+
+    hostname: zookeeper
+
+    container_name: zookeeper
+
+    ports:
+
+      - "2181:2181"
+
+    environment:
+
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+      ZOOKEEPER_TICK_TIME: 3000
+ 
+  kafka:
+
+    image: confluentinc/cp-kafka:7.5.0
+
+    hostname: kafka
+
+    container_name: kafka
+
+    depends_on:
+
+      - zookeeper
+
+    ports:
+
+      - "9092:9092"
+
+      - "9094:9094"
+
+    environment:
+
+      KAFKA_BROKER_ID: 1
+
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,HOST:PLAINTEXT
+
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,HOST://localhost:9094
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+    volumes:
+
+      - ./kafka_data:/var/lib/kafka/data
+ 
+  ksqldb-server:
+
+    image: confluentinc/ksqldb-server:0.29.0
+
+    hostname: ksqldb-server
+
+    container_name: ksqldb-server
+
+    depends_on:
+
+      - kafka
+
+    ports:
+
+      - "8088:8088"
+
+    environment:
+
+      KSQLDB_LISTENERS: http://0.0.0.0:8088
+
+      KSQLDB_BOOTSTRAP_SERVERS: kafka:9092
+
+      KSQLDB_KSQL_SERVICE_ID: ksqldb_service_1
+
+      KSQLDB_KSQL_PERSISTENT_QUERY_METRICS_ENABLED: "false"
+ 
+  ksqldb-cli:
+
+    image: confluentinc/ksqldb-cli:0.29.0
+
+    container_name: ksqldb-cli
+
+    depends_on:
+
+      - ksqldb-server
+
+    entrypoint: /bin/sh
+
+    tty: true
+
+ 
